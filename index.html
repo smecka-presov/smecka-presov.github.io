@@ -29,6 +29,10 @@
   html,body{margin:0;padding:0;height:100%;overflow:hidden;
     background:radial-gradient(120% 95% at 50% 42%, #1b3d5e 0%, #142e49 52%, #0c1d30 100%) fixed;
     background-color:#0c1d30;}
+  /* ⚠️ DOČASNÁ DIAGNOSTIKA — po odčítaní farieb ZMAZAŤ celý tento blok. */
+  html,body{background:#ff00ff !important;}          /* ružová = pozadie stránky */
+  #frame{background:#00ff00 !important;}             /* zelená  = rámec s výpisom */
+  #splash{box-shadow:inset 0 0 0 4px #ff9900;}       /* oranžový rám = kam až siaha splash */
   body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#e9f1fa;}
 
   /* Výpis sa renderuje na celú plochu. Safe-area si rieši sám (je to vlastná stránka).
@@ -94,7 +98,7 @@
     Výpis sa nepodarilo načítať.<br>Skontroluj pripojenie.
     <br><button id="retry" type="button">Skúsiť znova</button>
   </div>
-  <div class="sfoot">FINANČNÝ VÝPIS</div>
+  <div class="sfoot">DIAGNOSTIKA &nbsp;·&nbsp; BUILD D1</div>
 </div>
 
 <div id="tip">
