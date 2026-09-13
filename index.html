@@ -19,24 +19,23 @@
 
 <style>
   *{box-sizing:border-box;}
-  /* Pozadie = TEN ISTÝ gradient ako splash, ukotvený k obrazovke (`fixed`).
-     Prečo nie plná farba: gradient splashu (`120% 95% at 50% 42%`) končí až na
-     ~137 % výšky, takže na spodnom okraji obrazovky NIE JE pri koncovej farbe —
-     nameraný stred spodku je #132b44, rohy #11273e. Akákoľvek plná farba pod ním
-     preto vytvorí viditeľný pás v spodnej bezpečnej zóne (predtým #0c2238,
-     potom #0c1d30 — druhá bola dokonca vzdialenejšia). Rovnaký gradient pod
-     splashom = žiadny šev, nech sa tam vykreslí ktorákoľvek vrstva. */
-  html,body{margin:0;padding:0;height:100%;overflow:hidden;
-    background:radial-gradient(120% 95% at 50% 42%, #1b3d5e 0%, #142e49 52%, #0c1d30 100%) fixed;
-    background-color:#0c1d30;}
-  /* ⚠️ DOČASNÁ DIAGNOSTIKA — po odčítaní farieb ZMAZAŤ celý tento blok. */
-  html,body{background:#ff00ff !important;}          /* ružová = pozadie stránky */
-  #frame{background:#00ff00 !important;}             /* zelená  = rámec s výpisom */
-  #splash{box-shadow:inset 0 0 0 4px #ff9900;}       /* oranžový rám = kam až siaha splash */
+  /* PÁS V SPODNEJ BEZPEČNEJ ZÓNE — vyriešené diagnostickým náterom vrstiev
+     (BUILD D1, 2026-09-13). Zistenie: v iOS standalone PWA layout viewport KONČÍ
+     nad domovskou čiarkou — `position:fixed; inset:0` tam NESIAHA (oranžový rám
+     splashu sa zastavil nad pásom) a plochu pod ňou vykresľuje farba canvasu,
+     teda `html/body` (pás bol ružový). Hore to neplatí, tam `viewport-fit=cover`
+     funguje (splash ide pod stavový riadok).
+     Dve opravy, každá pre jednu fázu:
+       1) počas splashu → splash natiahnutý POD čiarku, gradient tak pokračuje bez švu;
+       2) po načítaní   → canvas má PRESNE farbu spodného okraja stránky výpisu.
+     Prečo `#08141f`: `vypis.html` má `radial-gradient(125% 85% at 50% 3%, …, #08141f)`
+     — jeho elipsa končí na ~114 % výšky, takže CELÁ spodná hrana je už pri koncovej
+     farbe. Tá sa dá trafiť jednou farbou (na rozdiel od gradientu splashu, ktorý
+     na spodku ešte beží — to bol dôvod, prečo predošlé dva pokusy zlyhali). */
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#08141f;}
   body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#e9f1fa;}
 
-  /* Výpis sa renderuje na celú plochu. Safe-area si rieši sám (je to vlastná stránka).
-     Priehľadné pozadie → kým sa iframe načíta, presvitá gradient vyššie (nie plná farba). */
+  /* Výpis sa renderuje na celú plochu. Safe-area si rieši sám (je to vlastná stránka). */
   #frame{position:fixed;inset:0;width:100%;height:100%;border:0;display:block;background:transparent;}
 
   /* SPLASH — prevzatý 1:1 z hlavného launchera (rovnaký brand, rovnaká animácia).
@@ -44,6 +43,8 @@
      prešiel celú históriu pohybov. `aspect-ratio` rezervuje výšku ešte pred
      dekódovaním SVG → logo neposkočí (lekcia v2.60.111). */
   #splash{position:fixed;inset:0;z-index:8;
+    /* natiahnutie POD domovskú čiarku — inak tam presvitá canvas (viď blok vyššie) */
+    bottom:calc(env(safe-area-inset-bottom) * -1);
     background:radial-gradient(120% 95% at 50% 42%, #1b3d5e 0%, #142e49 52%, #0c1d30 100%);
     color:#fff;transition:opacity .3s;overflow:hidden;}
   #splash.hide{opacity:0;pointer-events:none;}
@@ -98,7 +99,7 @@
     Výpis sa nepodarilo načítať.<br>Skontroluj pripojenie.
     <br><button id="retry" type="button">Skúsiť znova</button>
   </div>
-  <div class="sfoot">DIAGNOSTIKA &nbsp;·&nbsp; BUILD D1</div>
+  <div class="sfoot">FINANČNÝ VÝPIS</div>
 </div>
 
 <div id="tip">
