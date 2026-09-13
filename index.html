@@ -19,11 +19,21 @@
 
 <style>
   *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;height:100%;background:#0c1d30;overflow:hidden;}
+  /* Pozadie = TEN ISTÝ gradient ako splash, ukotvený k obrazovke (`fixed`).
+     Prečo nie plná farba: gradient splashu (`120% 95% at 50% 42%`) končí až na
+     ~137 % výšky, takže na spodnom okraji obrazovky NIE JE pri koncovej farbe —
+     nameraný stred spodku je #132b44, rohy #11273e. Akákoľvek plná farba pod ním
+     preto vytvorí viditeľný pás v spodnej bezpečnej zóne (predtým #0c2238,
+     potom #0c1d30 — druhá bola dokonca vzdialenejšia). Rovnaký gradient pod
+     splashom = žiadny šev, nech sa tam vykreslí ktorákoľvek vrstva. */
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;
+    background:radial-gradient(120% 95% at 50% 42%, #1b3d5e 0%, #142e49 52%, #0c1d30 100%) fixed;
+    background-color:#0c1d30;}
   body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#e9f1fa;}
 
-  /* Výpis sa renderuje na celú plochu. Safe-area si rieši sám (je to vlastná stránka). */
-  #frame{position:fixed;inset:0;width:100%;height:100%;border:0;display:block;background:#0c1d30;}
+  /* Výpis sa renderuje na celú plochu. Safe-area si rieši sám (je to vlastná stránka).
+     Priehľadné pozadie → kým sa iframe načíta, presvitá gradient vyššie (nie plná farba). */
+  #frame{position:fixed;inset:0;width:100%;height:100%;border:0;display:block;background:transparent;}
 
   /* SPLASH — prevzatý 1:1 z hlavného launchera (rovnaký brand, rovnaká animácia).
      Bez neho hráč po klepnutí na ikonu pozeral na prázdnu navy plochu, kým server
