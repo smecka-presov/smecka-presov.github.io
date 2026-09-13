@@ -19,32 +19,30 @@
 
 <style>
   *{box-sizing:border-box;}
-  /* PÁS V SPODNEJ BEZPEČNEJ ZÓNE — vyriešené diagnostickým náterom vrstiev
-     (BUILD D1, 2026-09-13). Zistenie: v iOS standalone PWA layout viewport KONČÍ
-     nad domovskou čiarkou — `position:fixed; inset:0` tam NESIAHA (oranžový rám
-     splashu sa zastavil nad pásom) a plochu pod ňou vykresľuje farba canvasu,
-     teda `html/body` (pás bol ružový). Hore to neplatí, tam `viewport-fit=cover`
-     funguje (splash ide pod stavový riadok).
-     Dve opravy, každá pre jednu fázu:
-       1) počas splashu → splash natiahnutý POD čiarku, gradient tak pokračuje bez švu;
-       2) po načítaní   → canvas má PRESNE farbu spodného okraja stránky výpisu.
-     Prečo `#08141f`: `vypis.html` má `radial-gradient(125% 85% at 50% 3%, …, #08141f)`
-     — jeho elipsa končí na ~114 % výšky, takže CELÁ spodná hrana je už pri koncovej
-     farbe. Tá sa dá trafiť jednou farbou (na rozdiel od gradientu splashu, ktorý
-     na spodku ešte beží — to bol dôvod, prečo predošlé dva pokusy zlyhali). */
-  html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#08141f;}
-  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#e9f1fa;}
+  /* VRSTVOVÁ ŠTRUKTÚRA PREVZATÁ 1:1 Z HLAVNÉHO LAUNCHERA (`ferdo3/smecka-launcher`).
+     Dôvod (Ferov návrh, 2026-09-13): v launcheri pás pod domovskou čiarkou
+     preukázateľne NIE JE, takže namiesto ďalšieho odvodzovania kopírujeme to,
+     čo na tom istom telefóne funguje. Podstatné nie je CSS splashu — to bolo
+     zhodné odjakživa — ale to, ČO JE POD NÍM:
+       html,body  = bez vlastného pozadia, body nesie gradient landingu
+       #appwrap   = position:fixed; inset:0; plné pozadie #16324f
+       #splash    = position:absolute; inset:0  (VNÚTRI appwrapu, nie fixed)
+       iframe     = obyčajný blok 100 % × 100 % vnútri appwrapu
+     Diagnostický náter (BUILD D1) predtým ukázal, že pás kreslí canvas
+     (html/body) a že `position:fixed; inset:0` pod domovskú čiarku nesiaha. */
+  html,body{margin:0;height:100%;min-height:100%;overflow:hidden;}
+  body{background:radial-gradient(125% 100% at 50% 30%, #16324f 0%, #112840 52%, #0a1828 100%);
+    color:#e9f1fa;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
 
+  #appwrap{position:fixed;inset:0;z-index:1000;background:#16324f;overflow:hidden;}
   /* Výpis sa renderuje na celú plochu. Safe-area si rieši sám (je to vlastná stránka). */
-  #frame{position:fixed;inset:0;width:100%;height:100%;border:0;display:block;background:transparent;}
+  #frame{display:block;border:0;width:100%;height:100%;background:transparent;}
 
   /* SPLASH — prevzatý 1:1 z hlavného launchera (rovnaký brand, rovnaká animácia).
      Bez neho hráč po klepnutí na ikonu pozeral na prázdnu navy plochu, kým server
      prešiel celú históriu pohybov. `aspect-ratio` rezervuje výšku ešte pred
      dekódovaním SVG → logo neposkočí (lekcia v2.60.111). */
-  #splash{position:fixed;inset:0;z-index:8;
-    /* natiahnutie POD domovskú čiarku — inak tam presvitá canvas (viď blok vyššie) */
-    bottom:calc(env(safe-area-inset-bottom) * -1);
+  #splash{position:absolute;inset:0;z-index:1;
     background:radial-gradient(120% 95% at 50% 42%, #1b3d5e 0%, #142e49 52%, #0c1d30 100%);
     color:#fff;transition:opacity .3s;overflow:hidden;}
   #splash.hide{opacity:0;pointer-events:none;}
@@ -76,7 +74,8 @@
 
   /* Lišta „pridaj na plochu" — len v bežnom prehliadači, nie v nainštalovanej appke.
      Dá sa zavrieť a zapamätá si to (localStorage), aby neotravovala pri každom otvorení. */
-  #tip{position:fixed;left:0;right:0;bottom:0;z-index:5;display:none;
+  /* z-index musí byť NAD #appwrap (1000), inak by lišta zmizla za ním */
+  #tip{position:fixed;left:0;right:0;bottom:0;z-index:1100;display:none;
        padding:10px 12px calc(10px + env(safe-area-inset-bottom));
        background:rgba(12,34,56,.96);border-top:1px solid rgba(255,255,255,.14);
        font-size:12px;line-height:1.45;align-items:center;gap:10px;}
@@ -90,16 +89,18 @@
 </head>
 <body>
 
-<iframe id="frame" title="SMEČKA — finančný výpis" allow="clipboard-write"></iframe>
-
-<div id="splash">
-  <img class="slogo" src="smecka-logo.svg" alt="SMEČKA Prešov">
-  <div class="spin"></div>
-  <div class="sfail">
-    Výpis sa nepodarilo načítať.<br>Skontroluj pripojenie.
-    <br><button id="retry" type="button">Skúsiť znova</button>
+<!-- Poradie a vnorenie prevzaté z launchera: splash PRED iframom, oba vnútri #appwrap. -->
+<div id="appwrap">
+  <div id="splash">
+    <img class="slogo" src="smecka-logo.svg" alt="SMEČKA Prešov">
+    <div class="spin"></div>
+    <div class="sfail">
+      Výpis sa nepodarilo načítať.<br>Skontroluj pripojenie.
+      <br><button id="retry" type="button">Skúsiť znova</button>
+    </div>
+    <div class="sfoot">FINANČNÝ VÝPIS</div>
   </div>
-  <div class="sfoot">FINANČNÝ VÝPIS</div>
+  <iframe id="frame" title="SMEČKA — finančný výpis" allow="clipboard-write"></iframe>
 </div>
 
 <div id="tip">
