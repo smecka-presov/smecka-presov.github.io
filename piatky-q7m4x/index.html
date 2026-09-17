@@ -63,6 +63,11 @@ details[open] .chev{transform:rotate(180deg)}
 .summary{border-color:rgba(245,166,35,.55);background:rgba(245,166,35,.07)}
 .sumtext{margin:6px 0 0;max-width:66ch}
 .sumlist{margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.pay{width:100%;border-collapse:collapse;margin:10px 0 0;font-size:13.5px}
+.pay th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);font-weight:600;padding:4px 8px 4px 0}
+.pay td{padding:5px 8px 5px 0;border-top:1px solid var(--line);color:var(--muted);vertical-align:top}
+.pay td b{color:var(--ink);font-variant-numeric:tabular-nums}
+.pay tr.hit td{background:rgba(245,166,35,.1)}
 details.cand{border:2px solid var(--accent);background:rgba(245,166,35,.09)}
 details.cand summary .date{color:var(--accent)}
 .c-cand{background:var(--accent);color:#1a1205}
@@ -88,7 +93,13 @@ details.june .date{color:var(--muted)}
       <li><strong>Jeden z týchto piatkov</strong> sme myslím nehrali kvôli nejakej školskej akcii.</li>
       <li><strong>Druhý</strong> bola hala k dispozícii, <strong>platili sme za ňu 30 €</strong>, tréning sa nekonal a do appky nebolo zapísaných −30 € ako výdavok za prenájom EKG.</li>
     </ul>
-    <p class="sumtext">Zvyšok rozdielu do 30 € tvoria zrejme tringelty (niektorí hráči dali o pár centov viac + appka zaokrúhľovala podiely hráčov za halu nahor). V júni sa hala pravdepodobne už neprenajímala.</p>
+    <p class="sumtext"><strong>Kľúč k odpovedi:</strong> <strong>20.5.</strong> sa naraz vyplatili všetky májové prenájmy haly. Koľko sa vtedy zaplatilo, povie, za koľko piatkov to bolo:</p>
+    <table class="pay"><thead><tr><th>Zaplatené 20.5.</th><th>Piatkov</th><th>Znamená</th></tr></thead><tbody>
+      <tr><td><b>90 €</b></td><td>3</td><td>1.5. · 8.5. · 15.5. — všetky sú v appke, potom v máji nechýba nič</td></tr>
+      <tr class="hit"><td><b>120 €</b></td><td>4</td><td>+ jeden piatok bez tréningu (22.5. alebo 29.5.) → <b>v appke chýba 30 €</b></td></tr>
+      <tr><td><b>150 €</b></td><td>5</td><td>+ oba piatky bez tréningu → <b>v appke chýba 60 €</b></td></tr>
+    </tbody></table>
+    <p class="sumtext">Zvyšok rozdielu do 30 € tvoria zrejme tringelty (niektorí hráči dali o pár centov viac + appka zaokrúhľovala podiely hráčov za halu nahor). Po 20.5. sa už na EKG netrénovalo, v júni sa hala neprenajímala a <strong>znova začíname až v októbri</strong>.</p>
     <p class="sumtext"><strong>Oprava:</strong> keď určíme, ktorý piatok sa platil, ale nehrali sme, zapíšeme v Pokladnici „+ Pridať výdavok" 30 € s <strong>dátumom toho piatku</strong> (napr. „Hala EKG 22.5. — nikto neprišiel").</p>
   </section>
 
@@ -133,7 +144,7 @@ function render() {
     }
     var cand = (f.iso === '2026-05-22' || f.iso === '2026-05-29'), june = f.iso.slice(5, 7) === '06';
     if (cand) chips = '<span class="chip c-cand">kandidát na opravu</span>' + chips;
-    if (june) chips += '<span class="chip c-june">jún — hala pravdepodobne neprenajatá</span>';
+    if (june) chips += '<span class="chip c-june">jún — hala sa už neprenajímala</span>';
     if (f.holiday) chips += '<span class="chip c-hol">' + esc(f.holiday) + '</span>';
     if (f.iso === '2026-04-17') chips += '<span class="chip c-mut">deň počiatočného stavu 114,60 €</span>';
     var body = '';
@@ -148,7 +159,7 @@ function render() {
     } else {
       body += '<h3>Tréning</h3><div class="kv">V appke nie je zapísaný žiadny piatkový tréning.</div>';
     }
-    body += '<h3>Hala vo výdavkoch</h3><div class="kv">' + (f.expenses.length ? f.expenses.map(function (x) { return '<b>' + eur(x.amt) + '</b> ' + esc(x.note) + (x.migr ? ' (odhad z prechodu na obálku)' : ''); }).join('<br>') : 'Žiadny výdavok.') + '</div>';
+    body += '<h3>Hala vo výdavkoch</h3><div class="kv">' + (f.expenses.length ? f.expenses.map(function (x) { return '<b>' + eur(x.amt) + '</b> ' + esc(x.note) + (x.migr ? ' (zapísané pri prechode na obálku)' : ''); }).join('<br>') : 'Žiadny výdavok.') + '</div>';
     if (f.deposits.length) body += '<h3>Vklady v ten deň</h3><div class="kv">' + f.deposits.map(function (x) { return esc(x.name) + ' <b>' + eur(x.amt) + '</b>'; }).join(' · ') + '</div>';
     if (f.week.length) body += '<h3>Okolo toho piatku (−4 až +3 dni)</h3><div class="week">' + f.week.map(function (w) { return '<span>' + esc(w.dow) + ' ' + esc(w.date) + ' — <b>' + esc(w.typ) + '</b>' + (w.who ? ' ' + esc(w.who) + ' ' + eur(w.amt) : (w.n ? ' · ' + w.n + ' hráčov' : '')) + '</span>'; }).join('') + '</div>';
     if (f.iso === '2026-04-17') body += '<div class="kv">Obálka sa v tento deň spočítala na <b>114,60 €</b>. Ak sa hala za 17.4. zaplatila <b>pred</b> spočítaním, už je v tom čísle → vyber „Nehralo sa, neplatilo“ (v appke nič nechýba).</div>';
