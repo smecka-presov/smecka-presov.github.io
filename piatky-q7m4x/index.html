@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Piatková hala EKG</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#0c2238; --ground2:#08141f; --card:rgba(255,255,255,.055); --card2:rgba(0,0,0,.22); --line:rgba(255,255,255,.1);
+  --ink:#eef3f8; --muted:#9bb0c6; --faint:#6f86a0; --accent:#f5a623; --ok:#4ade80; --okbg:rgba(74,222,128,.12);
+  --warn:#fbbf24; --warnbg:rgba(251,191,36,.12); --bad:#f87171; --badbg:rgba(248,113,113,.12); --hol:#c4b5fd; --holbg:rgba(196,181,253,.12);
+  color-scheme:dark;
+}
+html{background:var(--ground2)}
+body{margin:0;background:radial-gradient(125% 80% at 50% 0%,#143052,var(--ground) 50%,var(--ground2)) fixed;color:var(--ink);
+  font:15px/1.5 Barlow,system-ui,-apple-system,"Segoe UI",sans-serif;padding-inline:16px;padding-block:20px 48px}
+.wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1,h2,.num,.date{font-family:"Barlow Semi Condensed",Barlow,system-ui,sans-serif}
+h1{font-size:30px;line-height:1.1;margin:0;font-weight:800;text-wrap:balance}
+.eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:11px;color:var(--accent);font-weight:600}
+.lead{color:var(--muted);margin:6px 0 0;max-width:62ch}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.calc{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.calc div{background:var(--card2);border-radius:10px;padding:10px 12px}
+.calc b{display:block;font-family:"Barlow Semi Condensed",sans-serif;font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
+.calc span{font-size:12px;color:var(--muted)}
+.calc .hi b{color:var(--accent)}
+@media (max-width:520px){.calc{grid-template-columns:1fr}}
+.note{font-size:13.5px;color:var(--muted)}
+.note strong{color:var(--ink)}
+.list{display:flex;flex-direction:column;gap:8px}
+details{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+details[open]{background:rgba(255,255,255,.075)}
+summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:12px 14px}
+summary::-webkit-details-marker{display:none}
+summary:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.date{font-size:20px;font-weight:700;min-width:5.2em;font-variant-numeric:tabular-nums}
+.date small{display:block;font-family:Barlow,sans-serif;font-size:11px;font-weight:500;color:var(--faint);letter-spacing:.06em;text-transform:uppercase}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12px;font-weight:600;border-radius:999px;padding:3px 9px;white-space:nowrap}
+.c-ok{background:var(--okbg);color:var(--ok)} .c-warn{background:var(--warnbg);color:var(--warn)} .c-bad{background:var(--badbg);color:var(--bad)} .c-hol{background:var(--holbg);color:var(--hol)} .c-mut{background:var(--card2);color:var(--muted)}
+.chev{width:18px;height:18px;stroke:var(--muted);fill:none;stroke-width:2.2;transition:transform .15s}
+details[open] .chev{transform:rotate(180deg)}
+@media (prefers-reduced-motion:reduce){.chev{transition:none}}
+.body{padding:2px 14px 14px;display:flex;flex-direction:column;gap:12px;border-top:1px solid var(--line)}
+.body h3{margin:10px 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);font-weight:600}
+.names{display:flex;flex-wrap:wrap;gap:5px}
+.name{background:var(--card2);border-radius:7px;padding:2px 8px;font-size:13.5px}
+.name.abs{color:var(--faint);text-decoration:line-through;text-decoration-color:rgba(255,255,255,.25)}
+.kv{font-size:14px;color:var(--muted)} .kv b{color:var(--ink);font-variant-numeric:tabular-nums}
+.choice{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.choice button{font:600 13px Barlow,sans-serif;color:var(--muted);background:var(--card2);border:1px solid var(--line);border-radius:9px;padding:7px 11px;cursor:pointer}
+.choice button:focus-visible{outline:2px solid var(--accent)}
+.choice button[aria-pressed="true"].paid{background:var(--badbg);border-color:var(--bad);color:var(--bad)}
+.choice button[aria-pressed="true"].free{background:var(--okbg);border-color:var(--ok);color:var(--ok)}
+.choice button[aria-pressed="true"].unk{background:var(--warnbg);border-color:var(--warn);color:var(--warn)}
+.week{font-size:13.5px;color:var(--muted);display:flex;flex-direction:column;gap:2px}
+.week span b{color:var(--ink);font-weight:600}
+.foot{font-size:12px;color:var(--faint)}
+.summary{border-color:rgba(245,166,35,.55);background:rgba(245,166,35,.07)}
+.sumtext{margin:6px 0 0;max-width:66ch}
+.sumlist{margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+details.cand{border:2px solid var(--accent);background:rgba(245,166,35,.09)}
+details.cand summary .date{color:var(--accent)}
+.c-cand{background:var(--accent);color:#1a1205}
+details.june{background:rgba(148,163,184,.05);border-style:dashed;border-color:rgba(148,163,184,.25)}
+details.june .date{color:var(--muted)}
+.c-june{background:rgba(148,163,184,.14);color:#cbd5e1}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">SMEČKA · pokladnica vs. obálka</div>
+    <h1>Piatková hala EKG 17.4. – 26.6.2026</h1>
+    <p class="lead">Appka odpočíta halu 30 € <strong>len keď sa zapíše tréning</strong>. Zaplatený piatok bez zápisu = v obálke o 30 € menej, než ukazuje appka.</p>
+  </header>
+
+  <section class="panel summary" aria-labelledby="sum-title">
+    <div class="eyebrow" id="sum-title">Najpravdepodobnejšia príčina rozdielu</div>
+    <p class="sumtext">Rozdiel obálky oproti appke (~20–30 €) spôsobil s veľkou pravdepodobnosťou <strong>jeden z piatkov 22.5. alebo 29.5.</strong>:</p>
+    <ul class="sumlist">
+      <li><strong>Jeden z týchto piatkov</strong> sme myslím nehrali kvôli nejakej školskej akcii.</li>
+      <li><strong>Druhý</strong> bola hala k dispozícii, <strong>platili sme za ňu 30 €</strong>, tréning sa nekonal a do appky nebolo zapísaných −30 € ako výdavok za prenájom EKG.</li>
+    </ul>
+    <p class="sumtext">Zvyšok rozdielu do 30 € tvoria zrejme tringelty (niektorí hráči dali o pár centov viac + appka zaokrúhľovala podiely hráčov za halu nahor). V júni sa hala pravdepodobne už neprenajímala.</p>
+    <p class="sumtext"><strong>Oprava:</strong> keď určíme, ktorý piatok sa platil, ale nehrali sme, zapíšeme v Pokladnici „+ Pridať výdavok" 30 € s <strong>dátumom toho piatku</strong> (napr. „Hala EKG 22.5. — nikto neprišiel").</p>
+  </section>
+
+  <section class="panel" aria-labelledby="sum-h">
+    <div class="calc" id="calc">
+      <div><b class="num" id="kNone">0</b><span>piatkov bez záznamu v appke</span></div>
+      <div class="hi"><b class="num" id="kPaid">0 €</b><span>zaplatené haly, ktoré v appke chýbajú</span></div>
+      <div><b class="num" id="kEnv">180,30 €</b><span>obálka by mala mať (appka 180,30 − chýbajúce)</span></div>
+    </div>
+  </section>
+
+  <div class="list" id="list"></div>
+
+  <p class="foot">Zdroj: ostrý zošit SMEČKA, stav 17.9.2026 (hárky PODUJATIA, VKLADY, VYDAVKY). Dočasná stránka na dohľadanie rozdielu obálky, po vyriešení sa zmaže. Mená sú skrátené. Nič v appke nemení — kliknutia sa ukladajú len v tomto prehliadači.</p>
+</div>
+
+<script>
+var DATA = [{"iso": "2026-04-17", "label": "17.4.2026", "holiday": "", "trainings": [], "expenses": [], "deposits": [], "week": [{"date": "14.4.", "dow": "ut", "typ": "tréning ŠKP", "n": 5}]}, {"iso": "2026-04-24", "label": "24.4.2026", "holiday": "", "trainings": [{"typ": "tréning EKG", "present": ["Andrej Z.", "Fefe", "Katka L.", "Marek M.", "Mirka H.", "Miro H.", "Monika P."], "absent": [], "ext": 3, "shareInt": 3.0, "shareExt": 3.0, "mode": "nad prahom (každý platí)"}], "expenses": [{"amt": 30.0, "note": "Hala EKG 24.4.", "migr": true}], "deposits": [{"name": "Externí hráči", "amt": 9.0, "note": ""}, {"name": "Rado S.", "amt": 10.0, "note": ""}], "week": []}, {"iso": "2026-05-01", "label": "1.5.2026", "holiday": "Sviatok práce (štátny sviatok)", "trainings": [{"typ": "tréning EKG", "present": ["Aris A.", "Fefe", "Kamila D.", "Mirka H.", "Miro H.", "Monika P.", "Vlado Z."], "absent": [], "ext": 5, "shareInt": 2.5, "shareExt": 2.5, "mode": "nad prahom (každý platí)"}], "expenses": [{"amt": 30.0, "note": "Hala EKG 1.5.", "migr": true}], "deposits": [{"name": "Externí hráči", "amt": 12.5, "note": ""}], "week": []}, {"iso": "2026-05-08", "label": "8.5.2026", "holiday": "Deň víťazstva nad fašizmom (štátny sviatok)", "trainings": [{"typ": "tréning EKG", "present": ["Andrej Z.", "Aris A.", "Arisov k.", "Dada T.", "Fefe", "Kamila D.", "Mirka H.", "Miro H.", "Monika P.", "Rado S.", "Vilo M."], "absent": [], "ext": 0, "shareInt": 2.8, "shareExt": null, "mode": "nad prahom (každý platí)"}], "expenses": [{"amt": 30.0, "note": "Hala EKG 8.5.", "migr": true}], "deposits": [{"name": "Dada T.", "amt": 2.5, "note": ""}, {"name": "Externí hráči", "amt": 2.8, "note": ""}], "week": [{"date": "5.5.", "dow": "ut", "typ": "liga", "n": 6}, {"date": "5.5.", "dow": "ut", "typ": "vklad", "n": 0, "who": "Andrej Z.", "amt": 50.0}, {"date": "5.5.", "dow": "ut", "typ": "vklad", "n": 0, "who": "Katka L.", "amt": 10.0}, {"date": "5.5.", "dow": "ut", "typ": "vklad", "n": 0, "who": "Mirka H.", "amt": 10.0}, {"date": "5.5.", "dow": "ut", "typ": "vklad", "n": 0, "who": "Miro H.", "amt": 10.0}]}, {"iso": "2026-05-15", "label": "15.5.2026", "holiday": "", "trainings": [{"typ": "tréning EKG", "present": ["Andrej Z.", "Dada T.", "Ema Z.", "Fefe", "Katka L.", "Marek M.", "Rado S.", "Vlado Z."], "absent": [], "ext": 3, "shareInt": 2.8, "shareExt": 2.8, "mode": "nad prahom (každý platí)"}], "expenses": [{"amt": 30.0, "note": "Hala EKG 15.5.", "migr": true}], "deposits": [{"name": "Externí hráči", "amt": 8.4, "note": ""}], "week": [{"date": "12.5.", "dow": "ut", "typ": "tréning ŠKP", "n": 10}]}, {"iso": "2026-05-22", "label": "22.5.2026", "holiday": "", "trainings": [], "expenses": [], "deposits": [], "week": [{"date": "19.5.", "dow": "ut", "typ": "liga", "n": 7}, {"date": "20.5.", "dow": "st", "typ": "vklad", "n": 0, "who": "Monika P.", "amt": 10.0}]}, {"iso": "2026-05-29", "label": "29.5.2026", "holiday": "", "trainings": [], "expenses": [], "deposits": [], "week": []}, {"iso": "2026-06-05", "label": "5.6.2026", "holiday": "", "trainings": [], "expenses": [], "deposits": [], "week": [{"date": "2.6.", "dow": "ut", "typ": "tréning ŠKP", "n": 11}, {"date": "8.6.", "dow": "po", "typ": "vklad", "n": 0, "who": "Sofia", "amt": 3.0}]}, {"iso": "2026-06-12", "label": "12.6.2026", "holiday": "", "trainings": [], "expenses": [], "deposits": [], "week": [{"date": "8.6.", "dow": "po", "typ": "vklad", "n": 0, "who": "Sofia", "amt": 3.0}]}, {"iso": "2026-06-19", "label": "19.6.2026", "holiday": "", "trainings": [], "expenses": [], "deposits": [], "week": []}, {"iso": "2026-06-26", "label": "26.6.2026", "holiday": "", "trainings": [], "expenses": [], "deposits": [], "week": []}];
+var APP = 180.30, HALL = 30;
+var KEY = 'smecka-piatky-v1';
+var state = {};
+try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { state = {}; }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+function esc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function eur(n) { return (Math.round(n * 100) / 100).toFixed(2).replace('.', ',') + ' €'; }
+var DOW = ['ne','po','ut','st','št','pi','so'];
+function recorded(f) { return f.trainings.length > 0 || f.expenses.length > 0; }
+
+function render() {
+  var html = '';
+  DATA.forEach(function (f) {
+    var d = new Date(f.iso + 'T12:00:00');
+    var rec = recorded(f);
+    var hallSum = f.expenses.reduce(function (s, x) { return s + x.amt; }, 0);
+    var chips = '';
+    if (rec) chips += '<span class="chip c-ok">✓ tréning + hala ' + eur(hallSum) + ' v appke</span>';
+    else {
+      var st = state[f.iso] || 'unk';
+      chips += st === 'paid' ? '<span class="chip c-bad">hala zaplatená — v appke chýba</span>'
+             : st === 'free' ? '<span class="chip c-ok">nehralo sa, neplatilo sa</span>'
+             : '<span class="chip c-warn">bez záznamu — nevieme</span>';
+    }
+    var cand = (f.iso === '2026-05-22' || f.iso === '2026-05-29'), june = f.iso.slice(5, 7) === '06';
+    if (cand) chips = '<span class="chip c-cand">kandidát na opravu</span>' + chips;
+    if (june) chips += '<span class="chip c-june">jún — hala pravdepodobne neprenajatá</span>';
+    if (f.holiday) chips += '<span class="chip c-hol">' + esc(f.holiday) + '</span>';
+    if (f.iso === '2026-04-17') chips += '<span class="chip c-mut">deň počiatočného stavu 114,60 €</span>';
+    var body = '';
+    if (f.trainings.length) {
+      f.trainings.forEach(function (t) {
+        body += '<h3>Tréning — prítomní (' + t.present.length + (t.ext ? ' + ' + t.ext + ' externí' : '') + ')</h3><div class="names">' +
+          t.present.map(function (n) { return '<span class="name">' + esc(n) + '</span>'; }).join('') +
+          (t.ext ? '<span class="name">+ ' + t.ext + ' externí</span>' : '') + '</div>';
+        if (t.absent.length) body += '<h3>V poole, ale neprišli (' + t.absent.length + ')</h3><div class="names">' + t.absent.map(function (n) { return '<span class="name abs">' + esc(n) + '</span>'; }).join('') + '</div>';
+        body += '<div class="kv">Režim: <b>' + esc(t.mode || '—') + '</b> · podiel interného <b>' + (t.shareInt != null ? eur(t.shareInt) : '—') + '</b>' + (t.ext ? ' · externý <b>' + eur(t.shareExt) + '</b>' : '') + '</div>';
+      });
+    } else {
+      body += '<h3>Tréning</h3><div class="kv">V appke nie je zapísaný žiadny piatkový tréning.</div>';
+    }
+    body += '<h3>Hala vo výdavkoch</h3><div class="kv">' + (f.expenses.length ? f.expenses.map(function (x) { return '<b>' + eur(x.amt) + '</b> ' + esc(x.note) + (x.migr ? ' (odhad z prechodu na obálku)' : ''); }).join('<br>') : 'Žiadny výdavok.') + '</div>';
+    if (f.deposits.length) body += '<h3>Vklady v ten deň</h3><div class="kv">' + f.deposits.map(function (x) { return esc(x.name) + ' <b>' + eur(x.amt) + '</b>'; }).join(' · ') + '</div>';
+    if (f.week.length) body += '<h3>Okolo toho piatku (−4 až +3 dni)</h3><div class="week">' + f.week.map(function (w) { return '<span>' + esc(w.dow) + ' ' + esc(w.date) + ' — <b>' + esc(w.typ) + '</b>' + (w.who ? ' ' + esc(w.who) + ' ' + eur(w.amt) : (w.n ? ' · ' + w.n + ' hráčov' : '')) + '</span>'; }).join('') + '</div>';
+    if (f.iso === '2026-04-17') body += '<div class="kv">Obálka sa v tento deň spočítala na <b>114,60 €</b>. Ak sa hala za 17.4. zaplatila <b>pred</b> spočítaním, už je v tom čísle → vyber „Nehralo sa, neplatilo“ (v appke nič nechýba).</div>';
+    if (!rec) {
+      var s2 = state[f.iso] || 'unk';
+      body += '<h3>Čo platí pre tento piatok?</h3><div class="choice" data-iso="' + f.iso + '">' +
+        '<button type="button" class="paid" data-v="paid" aria-pressed="' + (s2 === 'paid') + '">Hala zaplatená 30 € (nikto neprišiel)</button>' +
+        '<button type="button" class="free" data-v="free" aria-pressed="' + (s2 === 'free') + '">Neplatilo sa (školská akcia / zrušené)</button>' +
+        '<button type="button" class="unk" data-v="unk" aria-pressed="' + (s2 === 'unk') + '">Nevieme</button></div>';
+    }
+    html += '<details id="f-' + f.iso + '" class="' + (cand ? 'cand' : '') + (june ? ' june' : '') + '"' + (openSet[f.iso] ? ' open' : '') + '><summary><span class="date">' + esc(f.label.replace(/2026$/, '')) + '<small>piatok</small></span><span class="chips">' + chips + '</span>' +
+      '<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg></summary><div class="body">' + body + '</div></details>';
+  });
+  document.getElementById('list').innerHTML = html;
+  var none = DATA.filter(function (f) { return !recorded(f); });
+  var paid = none.filter(function (f) { return state[f.iso] === 'paid'; });
+  var miss = paid.length * HALL;
+  document.getElementById('kNone').textContent = none.length;
+  document.getElementById('kPaid').textContent = eur(miss);
+  document.getElementById('kEnv').textContent = eur(APP - miss);
+
+}
+var openSet = {};
+document.getElementById('list').addEventListener('toggle', function (e) {
+  var el = e.target; if (el.tagName !== 'DETAILS') return;
+  var iso = el.id.slice(2); if (el.open) openSet[iso] = true; else delete openSet[iso];
+}, true);
+document.getElementById('list').addEventListener('click', function (e) {
+  var b = e.target.closest('.choice button'); if (!b) return;
+  var iso = b.parentNode.getAttribute('data-iso');
+  state[iso] = b.getAttribute('data-v'); openSet[iso] = true; save(); render();
+  var btn = document.querySelector('.choice[data-iso="' + iso + '"] button[data-v="' + state[iso] + '"]'); if (btn) btn.focus();
+});
+render();
+</script>
+
+</body>
+</html>
