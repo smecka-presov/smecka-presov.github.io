@@ -123,17 +123,23 @@ var frame  = document.getElementById('frame');
 var splash = document.getElementById('splash');
 var done   = false, failT = null;
 
+/* Splash zmizne, až keď sa Prehľad ozve (pozdrav po vykreslení). Rámec hlási „načítané“ skôr, než Apps Script
+   vloží stránku → bez toho hráč sekundy pozeral na prázdnu plochu (overené 2026-09-24). Pri prepnutí mesiaca sa splash
+   ukáže znova: starý Prehľad sa z rámca hneď zmaže, kostra by nebola vidieť. */
+function ready() { done = true; clearTimeout(failT); clearTimeout(loadT); splash.className = 'hide'; }
+var loadT = null;
 function load(url) {
   done = false;
-  clearTimeout(failT);
+  splash.className = '';
+  clearTimeout(failT); clearTimeout(loadT);
   /* Poistka proti nekonečnému čakaniu (vypadnutý signál): po 25 s hláška a tlačidlo. */
   failT = setTimeout(function () { if (!done) splash.className = 'failed'; }, 25000);
   frame.src = url;
 }
+/* Poistka: Prehľad bez pozdravu (stará verzia, chybová stránka Google) → splash preč 15 s po načítaní rámca. */
 frame.addEventListener('load', function () {
-  done = true;
-  clearTimeout(failT);
-  splash.className = 'hide';
+  clearTimeout(loadT);
+  loadT = setTimeout(function () { if (!done) ready(); }, 15000);
 });
 document.getElementById('retry').addEventListener('click', function () { location.reload(); });
 
@@ -150,6 +156,7 @@ window.addEventListener('message', function (e) {
   if (d.smecka === 'prehlad-hello') {
     if (typeof d.top === 'number' && d.top >= 0 && d.top < 200) appTop = Math.round(d.top);
     vzLayout();
+    ready();
     if (e.source) { try { e.source.postMessage({ smecka: 'obal-ready' }, o); } catch (x) {} }
   } else if (d.smecka === 'prehlad-nav' && okUrl(d.url)) {
     if (e.source) { try { e.source.postMessage({ smecka: 'obal-nav-ok' }, o); } catch (x) {} }
