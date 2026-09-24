@@ -29,14 +29,14 @@
   vzApply();
   if (window.matchMedia) { try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", vzApply); } catch (e) {} }
   /* posun pod hodiny: iOS z plochy kreslí stránku pod hodiny; env() v iOS 26 hlási často 0 → max(env, odhad podľa výšky
-     obrazovky). Prehľad v pozdrave hlási, koľko odsadzuje sám → obal len zvyšok, nie dvakrát. */
+     obrazovky). Celý posun robí obal (pás vo farbe appky nad rámcom); Prehľad v obale vlastný posun vypne (@93, html.inobal)
+     → obsah pri posúvaní nejde pod hodiny. (Predtým obal odpočítal posun Prehľadu → na iPhone 0 → obsah pod hodinami.) */
   var VZ_TOP = { 667: 20, 736: 20, 812: 50, 844: 47, 852: 59, 874: 62, 896: 48, 926: 47, 932: 59, 956: 62 };
-  var appTop = 0;
   function vzLayout() {
     var ios = /iP(hone|od)/.test(navigator.userAgent) && window.navigator.standalone === true;
     var env = 0, p = document.getElementById("vzprobe"); if (p) env = Math.round(p.getBoundingClientRect().height);
     var sh = Math.max(screen.height, screen.width), need = ios ? Math.max(env, VZ_TOP[sh] || 59) : env;
-    document.documentElement.style.setProperty("--vztop", Math.max(0, need - appTop) + "px");
+    document.documentElement.style.setProperty("--vztop", need + "px");
     var w = document.getElementById("appwrap"); if (w) { w.style.bottom = "1px"; void w.offsetHeight; w.style.bottom = ""; }   /* vynútiť prepočet výšky */
   }
   window.addEventListener("resize", vzLayout);
@@ -153,7 +153,6 @@ window.addEventListener('message', function (e) {
   if (!/^https:\/\/([a-z0-9-]+\.)*(googleusercontent\.com|google\.com)$/.test(o)) return;
   var d = e.data || {};
   if (d.smecka === 'prehlad-hello') {
-    if (typeof d.top === 'number' && d.top >= 0 && d.top < 200) appTop = Math.round(d.top);
     vzLayout();
     ready();
     if (e.source) { try { e.source.postMessage({ smecka: 'obal-ready' }, o); } catch (x) {} }
