@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SMEČKA — Prehľad</title>
+
+<!-- R27 (2026-09-24): obal načítava Prehľad pre hráčov (/exec, Od najnižšieho) namiesto starého výpisu.
+     Adresa, manifest a meno ikony („SMEČKA výpis“) ostávajú → ikony hráčov a linky v mailoch fungujú bez zásahu. -->
+<meta name="robots" content="noindex, nofollow">
+<!-- TESTOVACIA KÓPIA obalu (R27, 2026-09-24): bez manifestu → ikona z plochy si uloží túto adresu. Po skúške zmazať. -->
+<meta name="theme-color" id="tcol" content="#f2f2f7">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SMEČKA test">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="icon" href="../icon-192.png">
+
+<script>
+  /* FARBA A POSUN POD HODINY — prenesené celé z launchera `smecka-launcher` (nasadenie 1, overené na iPhone iOS 26):
+     iOS 26 ignoruje theme-color a farbu pruhu berie z pozadia stránky pri prvom vykreslení → okolie vo farbe appky.
+     Prehľad nemá voľbu Vzhľad, ide podľa telefónu (prefers-color-scheme) — rovnako tu. */
+  var VZ_BG = { light: "#f2f2f7", dark: "#000000" };
+  function vzApply() {
+    var dark = !!(window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches);
+    var r = document.documentElement; r.classList.toggle("vz-dark", dark); r.classList.toggle("vz-light", !dark);
+    var m = document.getElementById("tcol"); if (m) m.setAttribute("content", dark ? VZ_BG.dark : VZ_BG.light);   /* Android Chrome */
+  }
+  vzApply();
+  if (window.matchMedia) { try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", vzApply); } catch (e) {} }
+  /* posun pod hodiny: iOS z plochy kreslí stránku pod hodiny; env() v iOS 26 hlási často 0 → max(env, odhad podľa výšky
+     obrazovky). Prehľad v pozdrave hlási, koľko odsadzuje sám → obal len zvyšok, nie dvakrát. */
+  var VZ_TOP = { 667: 20, 736: 20, 812: 50, 844: 47, 852: 59, 874: 62, 896: 48, 926: 47, 932: 59, 956: 62 };
+  var appTop = 0;
+  function vzLayout() {
+    var ios = /iP(hone|od)/.test(navigator.userAgent) && window.navigator.standalone === true;
+    var env = 0, p = document.getElementById("vzprobe"); if (p) env = Math.round(p.getBoundingClientRect().height);
+    var sh = Math.max(screen.height, screen.width), need = ios ? Math.max(env, VZ_TOP[sh] || 59) : env;
+    document.documentElement.style.setProperty("--vztop", Math.max(0, need - appTop) + "px");
+    var w = document.getElementById("appwrap"); if (w) { w.style.bottom = "1px"; void w.offsetHeight; w.style.bottom = ""; }   /* vynútiť prepočet výšky */
+  }
+  window.addEventListener("resize", vzLayout);
+  if (window.visualViewport) window.visualViewport.addEventListener("resize", vzLayout);
+  document.addEventListener("DOMContentLoaded", function () { vzLayout(); setTimeout(vzLayout, 300); setTimeout(vzLayout, 1200); });
+  window.addEventListener("pageshow", vzLayout);
+</script>
+
+<style>
+  *{box-sizing:border-box}
+  html.vz-light{--vzbg:#f2f2f7;--vzfoot:#6e6e73;--vzink:#1c1c1e;--vzcard:#fff;--vzfill:#e7e7ec;--vzacc:#1f6fd1}
+  html.vz-dark{--vzbg:#000;--vzfoot:#98989f;--vzink:#f2f2f7;--vzcard:#1c1c1e;--vzfill:#2c2c2e;--vzacc:#4c9bf5}
+  /* ⚠️ `overflow:hidden` len na body, NIKDY na html (inak plocha pod domovskou čiarkou ostane biela — overené 2026-09-13).
+     `min-height:100vh` = telo prerastie pod domovskú čiarku a vykreslí ju svojím pozadím. */
+  html,body{margin:0;height:100%;min-height:100%;background:var(--vzbg)}
+  body{color:var(--vzink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    min-height:100vh;position:relative;overflow:hidden}
+  #vzprobe{position:fixed;top:0;left:0;width:1px;height:env(safe-area-inset-top);visibility:hidden;pointer-events:none}
+  #appwrap{position:fixed;inset:0;z-index:1000;background:var(--vzbg);overflow:hidden;padding-top:var(--vztop,0px)}
+  #frame{display:block;border:0;width:100%;height:100%;background:var(--vzbg)}
+
+  /* SPLASH vo farbe appky (mockup F1/F2) — zmizne, až keď je Prehľad načítaný. `aspect-ratio` = logo neposkočí. */
+  #splash{position:absolute;inset:0;z-index:1;background:var(--vzbg);transition:opacity .3s;overflow:hidden}
+  #splash.hide{opacity:0;pointer-events:none}
+  #splash .slogo{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:min(58vw,240px);aspect-ratio:1001/1020;height:auto;z-index:2;
+    filter:drop-shadow(0 6px 16px rgba(0,0,0,.18));
+    animation:pop .5s ease-out, breathe 3s ease-in-out .5s infinite}
+  @keyframes pop{from{opacity:0;transform:translate(-50%,-50%) scale(.86)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+  @keyframes breathe{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.035)}}
+  #splash .spin{width:30px;height:30px;border:3px solid rgba(246,198,74,.3);border-top-color:#f6c64a;
+    border-radius:50%;position:absolute;top:78%;left:50%;margin:-15px 0 0 -15px;z-index:2;animation:sp .8s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  #splash .sfoot{position:absolute;bottom:46px;left:0;right:0;z-index:2;text-align:center;
+    color:var(--vzfoot);font-size:11px;font-weight:700;letter-spacing:2.5px}
+  /* po 25 s bez odozvy (mockup F3) */
+  #splash .sfail{position:absolute;bottom:96px;left:24px;right:24px;z-index:3;text-align:center;
+    display:none;font-size:15px;line-height:1.45}
+  #splash.failed .sfail{display:block}
+  #splash.failed .spin{display:none}
+  #splash .sfail button{margin-top:12px;height:44px;padding:0 20px;border:0;border-radius:12px;background:var(--vzcard);
+    font:inherit;font-size:15px;font-weight:600;color:var(--vzacc);cursor:pointer}
+
+  /* Karta „Pridať na plochu“ (mockup F1) — len v bežnom prehliadači; zavretie si pamätá. Nad #appwrap (1000). */
+  #tip{position:fixed;left:16px;right:16px;bottom:calc(24px + env(safe-area-inset-bottom));z-index:1100;display:none;
+    background:var(--vzcard);border-radius:14px;padding:12px 12px 12px 14px;align-items:center;gap:12px;
+    box-shadow:0 4px 16px rgba(0,0,0,.10);font-size:15px;line-height:1.35}
+  #tip.show{display:flex}
+  #tip img{width:32px;height:32px;border-radius:8px;flex:0 0 auto}
+  #tip span{flex:1 1 auto}
+  #tip button{flex:0 0 auto;height:44px;padding:0 14px;border:0;border-radius:12px;background:var(--vzfill);
+    font:inherit;font-size:15px;font-weight:600;color:var(--vzacc);cursor:pointer}
+</style>
+</head>
+<body>
+<div id="vzprobe"></div>
+<div id="appwrap">
+  <div id="splash">
+    <img class="slogo" src="../smecka-logo.svg" alt="SMEČKA Prešov">
+    <div class="spin"></div>
+    <div class="sfail" role="alert">
+      Prehľad sa nepodarilo načítať.<br>Skontroluj pripojenie.
+      <br><button id="retry" type="button">Skúsiť znova</button>
+    </div>
+    <div class="sfoot">PREHĽAD</div>
+  </div>
+  <iframe id="frame" title="SMEČKA — Prehľad" allow="clipboard-write"></iframe>
+</div>
+
+<div id="tip">
+  <img src="../icon-192.png" alt="">
+  <span id="tiptext"></span>
+  <button id="tipx" type="button">OK</button>
+</div>
+
+<script>
+/* Cieľ = Prehľad pre hráčov na produkcii: AKTUÁLNY mesiac v deň otvorenia (bez ?month server zvolí dnešný),
+   zostatky Od najnižšieho (Fero 2026-09-24). BEZ tokenu — stránka je čítacia. */
+var BASE   = "https://script.google.com/macros/s/AKfycbxYLRcslCg1c35B1qitXYblGJup4WaoIZg9ZaC2VCRR-BeO80DdoQSpoCYBNIYp1ARPHA/exec";
+var TARGET = BASE + "?poradie=dlh";
+
+var frame  = document.getElementById('frame');
+var splash = document.getElementById('splash');
+var done   = false, failT = null;
+
+function load(url) {
+  done = false;
+  clearTimeout(failT);
+  /* Poistka proti nekonečnému čakaniu (vypadnutý signál): po 25 s hláška a tlačidlo. */
+  failT = setTimeout(function () { if (!done) splash.className = 'failed'; }, 25000);
+  frame.src = url;
+}
+frame.addEventListener('load', function () {
+  done = true;
+  clearTimeout(failT);
+  splash.className = 'hide';
+});
+document.getElementById('retry').addEventListener('click', function () { location.reload(); });
+
+/* PREPÍNANIE V RÁMCI (mockup F4): linky Prehľadu idú do celého okna → v obale by ťuk obal opustil.
+   Prehľad po načítaní pozdraví („prehlad-hello“), obal odpovie „obal-ready“; odvtedy Prehľad pri ťuku na
+   mesiac / rozsah pošle adresu a obal ju otvorí vo svojom rámci. Prijme LEN adresu tohto nasadenia. */
+function okUrl(u) {
+  return typeof u === 'string' && (u === BASE || u.indexOf(BASE + '?') === 0);
+}
+window.addEventListener('message', function (e) {
+  var o = String(e.origin || '');
+  if (!/^https:\/\/([a-z0-9-]+\.)*(googleusercontent\.com|google\.com)$/.test(o)) return;
+  var d = e.data || {};
+  if (d.smecka === 'prehlad-hello') {
+    if (typeof d.top === 'number' && d.top >= 0 && d.top < 200) appTop = Math.round(d.top);
+    vzLayout();
+    if (e.source) { try { e.source.postMessage({ smecka: 'obal-ready' }, o); } catch (x) {} }
+  } else if (d.smecka === 'prehlad-nav' && okUrl(d.url)) {
+    if (e.source) { try { e.source.postMessage({ smecka: 'obal-nav-ok' }, o); } catch (x) {} }
+    load(d.url);
+  }
+});
+
+load(TARGET);
+
+/* Service worker = podmienka, aby Android Chrome ponúkol „Inštalovať aplikáciu“. Bez cache. */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('../sw.js').catch(function () {});
+  });
+}
+
+/* Karta „pridaj na plochu“ — iba v bežnom prehliadači (iOS navigator.standalone, Android display-mode). */
+(function () {
+  var LS = 'smecka_obaltest_tip_off';
+  var standalone = false;
+  try {
+    standalone = (navigator.standalone === true) ||
+                 (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+  } catch (e) {}
+  var dismissed = false;
+  try { dismissed = localStorage.getItem(LS) === '1'; } catch (e) {}
+  if (standalone || dismissed) return;
+
+  var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  document.getElementById('tiptext').innerHTML = isIOS
+    ? 'Chceš prehľad po ruke? Ťukni na <b>Zdieľať</b> a zvoľ <b>Pridať na plochu</b>.'
+    : 'Chceš prehľad po ruke? V menu prehliadača zvoľ <b>Inštalovať aplikáciu</b>.';
+
+  var tip = document.getElementById('tip');
+  tip.classList.add('show');
+  document.getElementById('tipx').addEventListener('click', function () {
+    tip.classList.remove('show');
+    try { localStorage.setItem(LS, '1'); } catch (e) {}
+  });
+})();
+</script>
+</body>
+</html>
